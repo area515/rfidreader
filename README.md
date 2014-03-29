@@ -9,7 +9,7 @@ Description:
 	3.	Raspberry pi opens door.
 
 Links: 	rfid reader - http://www.seeedstudio.com/depot/Electronic-brick-125Khz-RFID-Card-Reader-p-702.html
-	rfid wiki   - http://www.seeedstudio.com/wiki/index.php?title=Electronic_brick_-_125Khz_RFID_Card_Reader
+	rfid wiki - http://www.seeedstudio.com/wiki/index.php?title=Electronic_brick_-_125Khz_RFID_Card_Reader
 	raspberry pi model b revision 2.0
 
 
