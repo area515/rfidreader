@@ -72,7 +72,7 @@ def request_access():
 	logger.info("access granted")
 	
 # Take the incoming message and do stuff
-def handle_message(incoming_message)
+def handle_message(incoming_message):
 	logger.info("******** Start Message ********") # Start logging block
 	logger.info("Received a new message: %s" % incoming_message) # log incoming message
 	try:
@@ -105,18 +105,8 @@ import serial
 port = serial.Serial("/dev/ttyAMA0", baudrate=9600, timeout=3.0)
 while True:
 	try:
-		incoming_message = repr(port.read(14)) # Get the incoming message
-		handle_message(incoming_message) # Parse the incoming message
-	except: # Catch all (bad practice but intentional)
-
-# To test:
-# comment out everything from the 'Setup Serial port' line to here
-# uncomment the following two lines
-#test_message = "\x0204003AA855C3\x03"
-#handle_message(test_message)
-#thats it.
-
-	
-	
-	
-	
+		incoming_message = port.read(14) # Get the incoming message
+		if incoming_message != '':
+			handle_message(incoming_message) # Parse the incoming message			
+	except:
+		logger.info("Exception")
