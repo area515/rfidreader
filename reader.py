@@ -65,6 +65,7 @@ def query_acl(rfid):
 				logger.info("id:%s has successfully authenticated" % id)
 				text.close()
 				return True
+	logger.info("rfid did not authenticate")
 	return False;
 	
 # Open the door
@@ -77,8 +78,9 @@ def handle_message(incoming_message):
 	logger.info("Received a new message: %s" % incoming_message) # log incoming message
 	try:
 		rfid_message = extract_message(incoming_message) # Get the rfid message, log/break if message format is bad
-		query_acl(rfid_message) # check access list for the rfid tag
-		request_access() # Open the door
+		if query_acl(rfid_message): # check access list for the rfid tag
+			logger.info("Opening door")
+			request_access() # Open the door
 	except:
 		logger.exception("Exception as follows")
 		raise
