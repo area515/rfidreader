@@ -69,8 +69,12 @@ def query_acl(rfid):
 	return False;
 	
 # Open the door
-def request_access():
-	logger.info("access granted")
+def open_door():
+	logger.info("door is open")
+	GPIO.output(solenoid, True)
+	time.sleep(speed)
+	GPIO.output(solenoid, False)
+	logger.info("door is closed")
 	
 # Take the incoming message and do stuff
 def handle_message(incoming_message):
@@ -88,7 +92,15 @@ def handle_message(incoming_message):
 		logger.info("********* End Message *********")
 		logger.info("")
 
-	
+
+
+# Setup GPIO (for later use)
+import RPi.GPIO as GPIO
+import time
+GPIO.setmode(GPIO.BOARD)
+solenoid = 12
+GPIO.setup(solenoid, GPIO.OUT)
+speed = 10 # this is 10 seconds
 # Setup logger
 import logging
 logger = logging.getLogger(__name__)
@@ -112,3 +124,6 @@ while True:
 			handle_message(incoming_message) # Parse the incoming message			
 	except:
 		logger.info("Exception")
+logger.info("Cleaning up pin resources...")
+GPIO.cleanup()
+logger.info("Exiting")
