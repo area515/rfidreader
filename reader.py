@@ -60,7 +60,9 @@ def query_acl(rfid):
 		for line in text:
 			member = line.split('|')
 			id = member[0]
-			key = member[1]
+			key = member[1].strip()
+			logger.info(len(key))
+			logger.info(len(rfid))
 			if rfid == key:
 				logger.info("id:%s has successfully authenticated" % id)
 				text.close()
@@ -84,7 +86,7 @@ def handle_message(incoming_message):
 		rfid_message = extract_message(incoming_message) # Get the rfid message, log/break if message format is bad
 		if query_acl(rfid_message): # check access list for the rfid tag
 			logger.info("Opening door")
-			request_access() # Open the door
+			open_door() # Open the door
 	except:
 		logger.exception("Exception as follows")
 		raise
