@@ -20,7 +20,7 @@ import logging
 import serial
 import string
 import time
-
+import traceback # for debuging
 
 def throws(error_message):
     raise RuntimeError(error_message)
@@ -136,7 +136,7 @@ def setup_server(args):
 
 # Setup GPIO (for later use)
 def setup_gpio(solenoid):
-
+    print solenoid
     GPIO.setmode(GPIO.BOARD)
     GPIO.setup(solenoid, GPIO.OUT)
 
@@ -147,6 +147,7 @@ def setup_logger(log_filename):
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
     # create a file handler
+    print log_filename
     handler = logging.FileHandler(log_filename)
     handler.setLevel(logging.INFO)
     # create a logging format
@@ -154,7 +155,7 @@ def setup_logger(log_filename):
     handler.setFormatter(formatter)
     # add the handlers to the logger
     logger.addHandler(handler)
-
+    logger.info("This is your logger")
     return logger
 
 
@@ -164,12 +165,16 @@ def setup_serial(logger, port="/dev/ttyAMA0", baudrate=9600, timeout=3.0):
     while True:
         try:
             incoming_message = connection.read(14)  # Get the incoming message
+            print "Waited for new message"
             if incoming_message != '':
-                handle_message(incoming_message)  # Parse the incoming message
+                handle_message(logger, incoming_message)  # Parse the incoming message
+                print "Finished handling a message"
         except:
             logger.info("Exception")
             logger.info("Cleaning up pin resources...")
-            GPIO.cleanup()
+            print "Unexpected error:", sys.exc_info()[0]
+            print "Exception, celaning up pin resources..."
+            traceback.print_exc()
             logger.info("Exiting")
 
 
@@ -177,11 +182,12 @@ def start_server(args):
 
     server = setup_server(args)
 
-    setup_gpio(server.solienoid)
-
+    setup_gpio(server.solenoid)
+    print args.logging
     if args.logging:
-        server.logger = setup_logger(server.args.log_filename)
-
+        print args.log
+        server.logger = setup_logger(args.log)
+    server.logger.info("Heading into the setup serial")
     setup_serial(server.logger, args.port, args.baudrate, args.timeout)
 
 
@@ -194,19 +200,21 @@ def parse_args(args):
     -l          --logging    <boolean>  True
     -lo         --log        <string>   "/reader.log"
     -s          --solenoid   <int>      12
+    sudo python readertest.py -p "/dev/ttyAMA0" -b 9600 -t 3.0 -l True -lo "/reader.log" -s 12
     """
 
     parser = argparse.ArgumentParser(prefix_chars='-')
 
-    parser.add_argument('-p', '--baudrate', type=str)
-    parser.add_argument('-b', '--timeout', type=int)
+    parser.add_argument('-p', '--port', type=str)
+    parser.add_argument('-b', '--baudrate', type=int)
     parser.add_argument('-t', '--timeout', type=float)
     parser.add_argument('-l', '--logging', type=bool)
     parser.add_argument('-lo', '--log', type=str)
+    parser.add_argument('-s', '--solenoid', type=int)
 
     parsed_args, unknown = parser.parse_known_args(args)
 
-    return parse_args
+    return parsed_args
 
 
 def main():
