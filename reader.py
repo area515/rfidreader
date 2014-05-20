@@ -27,10 +27,11 @@ def throws(error_message):
 
 
 # Get the rfid message, log/break if message format is bad
-def extract_message(rfidInput):
-    rfidInput = enclosing_tags_check(rfidInput)
+def extract_message(logger, rfidInput):
+
+    rfidInput = enclosing_tags_check(rfidInput) 
     hex_check(rfidInput)
-    compute_check_sum(rfidInput)
+    compute_check_sum(logger, rfidInput)
     return rfidInput[:-2]
 
 
@@ -46,8 +47,8 @@ def compute_check_sum(logger, rfidInput):
     computed = (
         hex(uncomp[0] ^ uncomp[1] ^ uncomp[2] ^ uncomp[3] ^ uncomp[4]))
 
-    logger.info("Given checksum is %s" % given)
-    logger.info("Computed checksum is %s" % computed)
+    #logger.info("Given checksum is %s" % given)
+    #logger.info("Computed checksum is %s" % computed)
     if computed != given:
         throws("Checksum is bad")
 
@@ -55,19 +56,24 @@ def compute_check_sum(logger, rfidInput):
 # Validating the incoming message
 # upon success, input returned with message and checksum only
 def enclosing_tags_check(rfidInput):
+
     startTag = "\x02"
     endTag = "\x03"
+    #check for startTag
     if rfidInput.startswith(startTag):
         rfidInput = rfidInput.replace(startTag, '')
     else:
         throws("Enclosing tag not present")
-        if rfidInput.endswith(endTag):
-            rfidInput = rfidInput.replace(endTag, '')
-        else:
-            throws("Enclosing tag not present")
-            if len(rfidInput) != 12:
-                throws("Message is not correct length")
-                return rfidInput
+    #check for endTag
+    if rfidInput.endswith(endTag):
+        rfidInput = rfidInput.replace(endTag, '')
+    else:
+        throws("Enclosing tag not present")
+    #length check
+    if len(rfidInput) != 12:
+        throws("Message is not correct length")
+
+    return rfidInput
 
 
 # Query the access control list (acl)
@@ -78,8 +84,6 @@ def query_acl(logger, rfid):
             member = line.split('|')
             id = member[0]
             key = member[1].strip()
-            logger.info(len(key))
-            logger.info(len(rfid))
             if rfid == key:
                 logger.info("id:%s has successfully authenticated" % id)
                 text.close()
@@ -98,17 +102,18 @@ def open_door(logger, solenoid, speed):
 
 
 # Take the incoming message and do stuff
-def handle_message(logger, incoming_message):
+def handle_message(logger, incoming_message, solenoid, speed):
     logger.info("******** Start Message ********")
-    logger.info("Received a new message: %s" % incoming_message)
+    logger.info("Received a new message")
+    #logger.info("Received a new message: %s" % incoming_message)
     try:
         # Get the rfid message, log/break if message format is bad
-        rfid_message = extract_message(incoming_message)
+        rfid_message = extract_message(logger, incoming_message)
 
         # check access list for the rfid tag
         if query_acl(logger, rfid_message):
             logger.info("Opening door")
-            open_door()  # Open the door
+            open_door(logger, solenoid, speed)  # Open the door
     except:
         logger.exception("Exception as follows")
         raise
@@ -136,7 +141,8 @@ def setup_server(args):
 
 # Setup GPIO (for later use)
 def setup_gpio(solenoid):
-    print solenoid
+    
+    GPIO.setwarnings(False)
     GPIO.setmode(GPIO.BOARD)
     GPIO.setup(solenoid, GPIO.OUT)
 
@@ -147,7 +153,6 @@ def setup_logger(log_filename):
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
     # create a file handler
-    print log_filename
     handler = logging.FileHandler(log_filename)
     handler.setLevel(logging.INFO)
     # create a logging format
@@ -155,27 +160,22 @@ def setup_logger(log_filename):
     handler.setFormatter(formatter)
     # add the handlers to the logger
     logger.addHandler(handler)
-    logger.info("This is your logger")
+    
     return logger
 
 
-def setup_serial(logger, port="/dev/ttyAMA0", baudrate=9600, timeout=3.0):
+def setup_serial(logger, port="/dev/ttyAMA0", baudrate=9600, timeout=3.0, solenoid=12, speed=10):
 
     connection = serial.Serial("/dev/ttyAMA0", baudrate=9600, timeout=3.0)
     while True:
         try:
             incoming_message = connection.read(14)  # Get the incoming message
-            print "Waited for new message"
             if incoming_message != '':
-                handle_message(logger, incoming_message)  # Parse the incoming message
-                print "Finished handling a message"
+                handle_message(logger, incoming_message, solenoid, speed)  # Parse the incoming message
         except:
             logger.info("Exception")
             logger.info("Cleaning up pin resources...")
-            print "Unexpected error:", sys.exc_info()[0]
-            print "Exception, celaning up pin resources..."
-            traceback.print_exc()
-            logger.info("Exiting")
+            GPIO.cleanup()
 
 
 def start_server(args):
@@ -183,12 +183,10 @@ def start_server(args):
     server = setup_server(args)
 
     setup_gpio(server.solenoid)
-    print args.logging
     if args.logging:
-        print args.log
         server.logger = setup_logger(args.log)
     server.logger.info("Heading into the setup serial")
-    setup_serial(server.logger, args.port, args.baudrate, args.timeout)
+    setup_serial(server.logger, args.port, args.baudrate, args.timeout, args.solenoid, server.speed)
 
 
 def parse_args(args):
