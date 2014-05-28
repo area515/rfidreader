@@ -1,7 +1,7 @@
 '''
 Created on May 24, 2014
 
-@author: rtxn0378
+@author: Sean O'Bryan, Ross Hendrickson  
 '''
 
 import logging
