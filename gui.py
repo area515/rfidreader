@@ -1,3 +1,7 @@
+'''
+@author: Sean O'Bryan, Ross Hendrickson  
+'''  
+
 from Tkinter import *
 import Tkinter
 import tkMessageBox
