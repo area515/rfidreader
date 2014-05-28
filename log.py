@@ -1,6 +1,4 @@
 '''
-Created on May 24, 2014
-
 @author: Sean O'Bryan, Ross Hendrickson  
 '''
 
