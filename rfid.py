@@ -1,6 +1,8 @@
 '''
-@author: Sean O'Bryan, Ross Hendrickson  
-'''  
+Created on May 25, 2014
+
+@author: rtxn0378
+'''
 
 from os import sys
 import argparse
@@ -24,11 +26,13 @@ class Authenticator(object):
     '''
     @staticmethod
     def query(rfidkey):
-        with open('acl') as text:
+        with open('/home/pi/rfid/rfidreader/acl') as text:
             for line in text:
                 member = line.split('|')
                 id = member[0]
                 key = member[1].strip()
+		print "known key: %s" % key
+		print "input key: %s" % rfidkey
                 if rfidkey == key:
                     logger.info("id:%s has successfully authenticated" % id)
                     text.close()
@@ -42,7 +46,7 @@ class Solenoid(object):
     classdocs
     '''
 
-    def __init__(self, pin=12, openduration=10):
+    def __init__(self, pin=12, openduration=10.0):
         '''
         Constructor
         '''
@@ -61,7 +65,8 @@ class Solenoid(object):
     def open_door(self):
         logger.info("door is open")
         GPIO.output(self.pin, True)
-        time.sleep(self.openduration)
+        #time.sleep(self.openduration)
+	time.sleep(10.0)
         GPIO.output(self.pin, False)
         logger.info("door is closed")
     
@@ -75,7 +80,7 @@ class Reader(object):
     '''
   
 
-    def __init__(self, solenoid=None, port="/dev/ttyAMA0", baudrate=9600, readtimeout=10):
+    def __init__(self, solenoid=None, port="/dev/ttyAMA0", baudrate=9600, readtimeout=10.0):
         '''
         Constructor
         '''
@@ -131,11 +136,13 @@ class Reader(object):
 
     def compute_check_sum(self):
         given = hex(int(self.rfidInput[10:], 16))
-        self.rfidInput = self.rfidInput[:-2]
+        #self.rfidInput = self.rfidInput[:-2]
         uncomp = bytearray.fromhex(self.rfidInput)
         computed = (
             hex(uncomp[0] ^ uncomp[1] ^ uncomp[2] ^ uncomp[3] ^ uncomp[4]))
     
+	print "Given checksum is %s" % given
+        print "Computed checksum is %s" % computed
         #logger.info("Given checksum is %s" % given)
         #logger.info("Computed checksum is %s" % computed)
         if computed != given:
@@ -194,8 +201,8 @@ def parse_args(args):
     -l          --logging        <boolean>  True
     -lo         --log            <string>   "/reader.log"
     -s          --solenoid        <int>      12
-    -o          --openduration    <int>    10
-    sudo python readertest.py -p "/dev/ttyAMA0" -b 9600 -t 3.0 -l True -lo "/reader.log" -s 12
+    -o          --openduration    <float>    10.0
+    sudo python rfid.py -p "/dev/ttyAMA0" -b 9600 -t 3.0 -l True -lo "/reader.log" -s 12
     """
 
     parser = argparse.ArgumentParser(prefix_chars='-')
