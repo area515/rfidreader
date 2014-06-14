@@ -1,7 +1,7 @@
 '''
 Created on May 25, 2014
 
-@author: rtxn0378
+@author: Sean O'Bryan, Ross Hendrickson  
 '''
 
 from os import sys
