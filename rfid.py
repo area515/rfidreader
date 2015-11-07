@@ -202,16 +202,16 @@ class Reader(object):
 
 class TagStateMachine:
     def __init__(self):
-        self.bufer = ""
+        self.buffer = ""
         
     def handle_character(self, char):
         if len(char) != 0:
             startTag = "\x02"
             endTag = "\x03"
             
-            buffer += char
+            self.buffer += char
             if char == startTag:
-                buffer = startTag
+                self.buffer = startTag
             if char == endTag:
                 return True     
         return False
@@ -235,6 +235,7 @@ def parse_args(args):
 
     parser.add_argument('-p', '--port', type=str)
     parser.add_argument('-b', '--baudrate', type=int)
+    parser.add_argument('-r', '--readtimeout', type=float)
     parser.add_argument('-l', '--logging', type=bool)
     parser.add_argument('-lo', '--log', type=str)
     parser.add_argument('-s', '--solenoid', type=int)
