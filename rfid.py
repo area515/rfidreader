@@ -186,11 +186,23 @@ class Reader(object):
             except:
                 traceback.print_exc()
         
+    def manual_release(self, connection):
+        buttonPin = 16
+	GPIO.setup(buttonPin,GPIO.IN, pull_up_down = GPIO.PUD_UP)
+        self.connection = True
+        while True:
+	    if(GPIO.input(buttonPin) == False):
+		logger.info("******** Start Message ********")
+	        self.solenoid.open_door()	       
+		logger.info("********* End Message *********") 
+
     def start(self):
 
         connection = serial.Serial(self.port, baudrate=self.baudrate, timeout=self.readtimeout)
         self.thread = threading.Thread(target=self.read_from_port, args=(connection,))
         self.thread.start()
+	self.thread2 = threading.Thread(target=self.manual_release, args=(connection,))
+	self.thread2.start()
 
 def parse_args(args):
     """Takes command line arguments and processes them
