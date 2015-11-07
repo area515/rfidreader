@@ -31,8 +31,8 @@ class Authenticator(object):
                 member = line.split('|')
                 id = member[0]
                 key = member[1].strip()
-		print "known key: %s" % key
-		print "input key: %s" % rfidkey
+                print "known key: %s" % key
+                print "input key: %s" % rfidkey
                 if rfidkey == key:
                     logger.info("id:%s has successfully authenticated" % id)
                     text.close()
@@ -66,21 +66,17 @@ class Solenoid(object):
         logger.info("door is open")
         GPIO.output(self.pin, True)
         #time.sleep(self.openduration)
-	time.sleep(10.0)
+        time.sleep(10.0)
         GPIO.output(self.pin, False)
         logger.info("door is closed")
     
-    
-
-
 
 class Reader(object):
     '''
     classdocs
     '''
-  
 
-    def __init__(self, solenoid=None, port="/dev/ttyAMA0", baudrate=9600, readtimeout=10.0):
+    def __init__(self, solenoid=None, port="/dev/ttyAMA0", baudrate=9600):
         '''
         Constructor
         '''
@@ -90,7 +86,6 @@ class Reader(object):
         self.solenoid = solenoid
         self.port= port 
         self.baudrate = baudrate
-        self.readtimeout = readtimeout
         self.thread = None
         self.lastkey = ''
         self.connection = None
@@ -99,7 +94,6 @@ class Reader(object):
     # Validating the incoming message
     # upon success, input returned with message and checksum only
     def enclosing_tags_check(self):
-    
         startTag = "\x02"
         endTag = "\x03"
 
@@ -122,14 +116,12 @@ class Reader(object):
         
     # Get the rfid message, log/break if message format is bad
     def extract_message(self):
-    
         self.enclosing_tags_check() 
         self.hex_check()
         self.compute_check_sum()
         self.rfidInput = self.rfidInput[:-2]
     
     def hex_check(self):
-        
         if not all(c in string.hexdigits for c in self.rfidInput):
             throws("Message contains invalid hex characters")
 
@@ -141,7 +133,7 @@ class Reader(object):
         computed = (
             hex(uncomp[0] ^ uncomp[1] ^ uncomp[2] ^ uncomp[3] ^ uncomp[4]))
     
-	print "Given checksum is %s" % given
+        print "Given checksum is %s" % given
         print "Computed checksum is %s" % computed
         #logger.info("Given checksum is %s" % given)
         #logger.info("Computed checksum is %s" % computed)
@@ -178,9 +170,13 @@ class Reader(object):
             
     def read_from_port(self, connection):
         self.connection = True
+        stateMachine = TagStateMachine()
+
         while self.connection:
             try:
-                self.rfidInput = connection.read(14)  # Get the incoming message
+                while not stateMachine.handle_character(connection.read(1)):
+                    pass
+                self.rfidInput = stateMachine.get_buffer()
                 if self.rfidInput != '':
                     self.handle_message(self.solenoid)  # Parse the incoming message
             except:
@@ -188,28 +184,46 @@ class Reader(object):
         
     def manual_release(self, connection):
         buttonPin = 16
-	GPIO.setup(buttonPin,GPIO.IN, pull_up_down = GPIO.PUD_UP)
+        GPIO.setup(buttonPin,GPIO.IN, pull_up_down = GPIO.PUD_UP)
         self.connection = True
         while True:
-	    if(GPIO.input(buttonPin) == False):
-		logger.info("******** Start Message ********")
-	        self.solenoid.open_door()	       
-		logger.info("********* End Message *********") 
+            if(GPIO.input(buttonPin) == False):
+                logger.info("******** Start Message ********")
+                self.solenoid.open_door()          
+                logger.info("********* End Message *********") 
 
     def start(self):
 
-        connection = serial.Serial(self.port, baudrate=self.baudrate, timeout=self.readtimeout)
+        connection = serial.Serial(self.port, baudrate=self.baudrate, timeout=1)
         self.thread = threading.Thread(target=self.read_from_port, args=(connection,))
         self.thread.start()
-	self.thread2 = threading.Thread(target=self.manual_release, args=(connection,))
-	self.thread2.start()
+        self.thread2 = threading.Thread(target=self.manual_release, args=(connection,))
+        self.thread2.start()
 
+class TagStateMachine:
+    def __init__(self):
+        self.buffer = ""
+        
+    def handle_character(self, char):
+        if len(char) != 0:
+            startTag = "\x02"
+            endTag = "\x03"
+            
+            self.buffer += char
+            if char == startTag:
+                self.buffer = startTag
+            if char == endTag:
+                return True     
+        return False
+        
+    def get_buffer(self):
+        return self.buffer
+    
 def parse_args(args):
     """Takes command line arguments and processes them
 
     -p          --port            <string>   "/dev/ttyAMA0"
     -b          --baudrate        <int>      9600
-    -r          --readtimeout    <float>    3.0A
     -l          --logging        <boolean>  True
     -lo         --log            <string>   "/reader.log"
     -s          --solenoid        <int>      12
@@ -244,7 +258,7 @@ def main():
     # make a solenoid
     solenoid = Solenoid(args.solenoid, args.openduration)
     # make an rfid reader
-    reader = Reader(solenoid, args.port, args.baudrate, args.readtimeout)
+    reader = Reader(solenoid, args.port, args.baudrate)
     # start the reader
     reader.start()
 
