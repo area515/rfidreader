@@ -188,9 +188,13 @@ class Reader(object):
         self.connection = True
         while True:
             if(GPIO.input(buttonPin) == False):
-                logger.info("******** Start Message ********")
-                self.solenoid.open_door()          
-                logger.info("********* End Message *********") 
+                time.sleep(.1)
+                if(GPIO.input(buttonPin) == False):
+                    logger.info("******** Start Message ********")
+                    self.solenoid.open_door()
+                    logger.info("********* End Message *********")
+                else:
+                    logger.info("******* Missed Debounce *******")
 
     def start(self):
 
