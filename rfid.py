@@ -194,7 +194,7 @@ class Reader(object):
         self.connection = True
         while True:
             if(GPIO.input(buttonPin) == False):
-		    time.sleep(.1)
+                time.sleep(.1)
                 if(GPIO.input(buttonPin) == False):
                     logger.info("******** Start Message ********")
                     self.solenoid.open_door()
