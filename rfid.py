@@ -193,6 +193,8 @@ class Reader(object):
                     logger.info("******** Start Message ********")
                     self.solenoid.open_door()
                     logger.info("********* End Message *********")
+                    while(GPIO.input(buttonPin == False):
+                        time.sleep(.1)
                 else:
                     logger.info("******* Missed Debounce *******")
 
