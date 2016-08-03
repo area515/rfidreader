@@ -14,6 +14,7 @@ import string
 import traceback # from debugging
 import threading
 import subprocess as sp
+import os
 
 test = ''
 logger = log.setup_logger('reader.log')
@@ -27,17 +28,19 @@ class Authenticator(object):
     '''
     @staticmethod
     def query(rfidkey):
-        with open('/home/pi/rfid/rfidreader/acl') as text:
-            for line in text:
-                member = line.split('|')
-                id = member[0]
-                key = member[1].strip()
-                print "known key: %s" % key
-                print "input key: %s" % rfidkey
-                if rfidkey == key:
-                    logger.info("id:%s has successfully authenticated" % id)
-                    text.close()
-                    return True
+        acl_file = '/home/pi/rfid/rfidreader/acl'
+        if os.path.exists(acl_file):
+            with open(acl_file) as text:
+                for line in text:
+                    member = line.split('|')
+                    id = member[0]
+                    key = member[1].strip()
+                    print "known key: %s" % key
+                    print "input key: %s" % rfidkey
+                    if rfidkey == key:
+                        logger.info("id:%s has successfully authenticated" % id)
+                        text.close()
+                        return True
         logger.info("rfid did not authenticate")
         return False
 
@@ -200,7 +203,7 @@ class Reader(object):
                     self.solenoid.open_door()
                     logger.info("********* End Message *********")
                     count = 0
-                    while(GPIO.input(buttonPin == False)):
+                    while(GPIO.input(buttonPin) == False):
                         time.sleep(.1)
                         count += 1 
                         if count == 40: 
