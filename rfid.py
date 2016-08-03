@@ -13,6 +13,7 @@ import time
 import string
 import traceback # from debugging
 import threading
+import sp as subprocess
 
 test = ''
 logger = log.setup_logger('reader.log')
@@ -69,6 +70,11 @@ class Solenoid(object):
         time.sleep(10.0)
         GPIO.output(self.pin, False)
         logger.info("door is closed")
+ 
+    def blink_door(self): 
+        GPIO.output(self.pin, True) 
+        time.sleep(0.1) 
+        GPIO.output(self.pin, False) 
     
 
 class Reader(object):
@@ -188,9 +194,21 @@ class Reader(object):
         self.connection = True
         while True:
             if(GPIO.input(buttonPin) == False):
-                logger.info("******** Start Message ********")
-                self.solenoid.open_door()          
-                logger.info("********* End Message *********") 
+		    time.sleep(.1)
+                if(GPIO.input(buttonPin) == False):
+                    logger.info("******** Start Message ********")
+                    self.solenoid.open_door()
+                    logger.info("********* End Message *********")
+                    count = 0
+                    while(GPIO.input(buttonPin == False):
+                        time.sleep(.1)
+                        count += 1 
+                        if count == 40: 
+                            self.solenoid.blink_door() 
+                            sp.call('/home/pi/rfid/rfidreader/updateACL') 
+                            self.solenoid.blink_door() 
+                else:
+                    logger.info("******* Missed Debounce *******")
 
     def start(self):
 
