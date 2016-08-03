@@ -13,7 +13,7 @@ import time
 import string
 import traceback # from debugging
 import threading
-import sp as subprocess
+import subprocess as sp
 
 test = ''
 logger = log.setup_logger('reader.log')
@@ -200,7 +200,7 @@ class Reader(object):
                     self.solenoid.open_door()
                     logger.info("********* End Message *********")
                     count = 0
-                    while(GPIO.input(buttonPin == False):
+                    while(GPIO.input(buttonPin == False)):
                         time.sleep(.1)
                         count += 1 
                         if count == 40: 
